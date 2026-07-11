@@ -541,6 +541,66 @@
                 <div class="upload-box">
 
                     <label>
+                        Movimentação Horizontal (.txt)
+                    </label>
+
+                    <label
+                        class="upload-btn"
+                        for="arquivoDemandaHorizontal">
+
+                        Selecionar Arquivo
+
+                    </label>
+
+                    <input
+                        type="file"
+                        id="arquivoDemandaHorizontal"
+                        accept=".txt"
+                        onchange="nomeArquivoSelecionado('arquivoDemandaHorizontal','nomeDemandaHorizontal')">
+
+                    <div
+                        class="upload-nome"
+                        id="nomeDemandaHorizontal">
+
+                        Nenhum arquivo selecionado
+
+                    </div>
+
+                </div>
+
+                <div class="upload-box">
+
+                    <label>
+                        Movimentação Vertical (.txt)
+                    </label>
+
+                    <label
+                        class="upload-btn"
+                        for="arquivoDemandaVertical">
+
+                        Selecionar Arquivo
+
+                    </label>
+
+                    <input
+                        type="file"
+                        id="arquivoDemandaVertical"
+                        accept=".txt"
+                        onchange="nomeArquivoSelecionado('arquivoDemandaVertical','nomeDemandaVertical')">
+
+                    <div
+                        class="upload-nome"
+                        id="nomeDemandaVertical">
+
+                        Nenhum arquivo selecionado
+
+                    </div>
+
+                </div>
+
+                <div class="upload-box">
+
+                    <label>
                         Consulta 70 — Demanda Separação (.txt)
                     </label>
 
@@ -628,7 +688,7 @@
                 </h3>
 
                 <p class="nota-secao">
-                    Reaproveita os dados já processados nas seções de Movimentação Horizontal e Vertical acima. Processe-as (ou reprocesse) para atualizar aqui.
+                    Baseado nos arquivos de Movimentação Horizontal e Vertical selecionados acima, neste mesmo card.
                 </p>
 
                 <div class="kpis kpis-compacto">
@@ -652,7 +712,7 @@
 
                 <div id="blocoArmazenagensPendentes">
                     <p class="vazio-estado">
-                        Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
+                        Nenhum arquivo de Movimentação Horizontal ou Vertical selecionado neste card.
                     </p>
                 </div>
 

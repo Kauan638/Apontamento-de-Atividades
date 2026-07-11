@@ -7,6 +7,8 @@ let dadosHorizontal = [];
 let dadosVertical = [];
 let dadosSeparacao = [];
 let dadosDemandaSeparacao = [];
+let dadosDemandaHorizontal = [];
+let dadosDemandaVertical = [];
 
 const ORDEM_PAVILHAO_SEPARACAO = [
     "Pavilhão 1",
@@ -260,8 +262,6 @@ function processarHorizontal(){
 
         renderResultado("horizontal");
 
-        atualizarArmazenagensPendentes();
-
     };
 
     reader.onerror = ()=>{
@@ -305,8 +305,6 @@ function processarVertical(){
         );
 
         renderResultado("vertical");
-
-        atualizarArmazenagensPendentes();
 
     };
 
@@ -590,12 +588,36 @@ function parseDemandaSeparacao(texto){
 
 }
 
-function processarDemandaSeparacao(){
+function lerArquivoComoTexto(file){
 
-    const input =
+    return new Promise((resolve, reject)=>{
+
+        const reader = new FileReader();
+
+        reader.onload = e => resolve(e.target.result);
+
+        reader.onerror = () => reject(
+            new Error("Falha ao ler o arquivo " + file.name)
+        );
+
+        reader.readAsText(file, "ISO-8859-1");
+
+    });
+
+}
+
+async function processarDemandaSeparacao(){
+
+    const inputSeparacao =
     document.getElementById("arquivoDemandaSeparacao");
 
-    if(!input.files.length){
+    const inputHorizontal =
+    document.getElementById("arquivoDemandaHorizontal");
+
+    const inputVertical =
+    document.getElementById("arquivoDemandaVertical");
+
+    if(!inputSeparacao.files.length){
 
         alert(
             "Selecione o arquivo da Consulta 70 - Demanda Separação."
@@ -605,47 +627,59 @@ function processarDemandaSeparacao(){
 
     }
 
-    const reader = new FileReader();
+    try{
 
-    reader.onload = e=>{
+        const textoSeparacao =
+        await lerArquivoComoTexto(inputSeparacao.files[0]);
 
-        try{
+        dadosDemandaSeparacao =
+        parseDemandaSeparacao(textoSeparacao);
 
-            dadosDemandaSeparacao =
-            parseDemandaSeparacao(e.target.result);
+        if(inputHorizontal.files.length){
 
-            renderDemandaSeparacao();
+            const textoHorizontal =
+            await lerArquivoComoTexto(inputHorizontal.files[0]);
 
-            atualizarArmazenagensPendentes();
+            dadosDemandaHorizontal =
+            parseMovimentacao(textoHorizontal, false);
 
-            document.getElementById(
-                "resultado-demanda-separacao"
-            ).classList.remove("oculto");
+        }else{
 
-        }catch(erro){
-
-            console.error(erro);
-
-            alert(
-                "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
-            );
+            dadosDemandaHorizontal = [];
 
         }
 
-    };
+        if(inputVertical.files.length){
 
-    reader.onerror = ()=>{
+            const textoVertical =
+            await lerArquivoComoTexto(inputVertical.files[0]);
+
+            dadosDemandaVertical =
+            parseMovimentacao(textoVertical, true);
+
+        }else{
+
+            dadosDemandaVertical = [];
+
+        }
+
+        renderDemandaSeparacao();
+
+        atualizarArmazenagensPendentes();
+
+        document.getElementById(
+            "resultado-demanda-separacao"
+        ).classList.remove("oculto");
+
+    }catch(erro){
+
+        console.error(erro);
 
         alert(
-            "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
+            "Não foi possível ler um dos arquivos selecionados. Verifique os arquivos e tente novamente."
         );
 
-    };
-
-    reader.readAsText(
-        input.files[0],
-        "ISO-8859-1"
-    );
+    }
 
 }
 
@@ -948,8 +982,8 @@ function atualizarArmazenagensPendentes(){
     }
 
     const combinado = [
-        ...dadosHorizontal.map(d => ({...d, tipoMov:"Horizontal", limite:limites.horizontal})),
-        ...dadosVertical.map(d => ({...d, tipoMov:"Vertical", limite:limites.vertical}))
+        ...dadosDemandaHorizontal.map(d => ({...d, tipoMov:"Horizontal", limite:limites.horizontal})),
+        ...dadosDemandaVertical.map(d => ({...d, tipoMov:"Vertical", limite:limites.vertical}))
     ];
 
     const total =
@@ -978,7 +1012,7 @@ function atualizarArmazenagensPendentes(){
 
         container.innerHTML = `
         <p class="vazio-estado">
-            Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
+            Nenhum arquivo de Movimentação Horizontal ou Vertical selecionado neste card.
         </p>
         `;
 
