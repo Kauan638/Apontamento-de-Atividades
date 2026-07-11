@@ -1331,3 +1331,65 @@ SINCRONIZAÇÃO AUTOMÁTICA
     font-family:var(--font-mono);
 
 }
+
+/* =========================
+RESUMO EXECUTIVO — WHATSAPP
+========================= */
+
+.passo-explicacao{
+
+    font-size:.82rem;
+
+    color:var(--text-muted);
+
+    margin-bottom:16px;
+
+    max-width:760px;
+
+    line-height:1.5;
+
+}
+
+.acoes-whatsapp{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-bottom:16px;
+
+    flex-wrap:wrap;
+
+}
+
+.acoes-whatsapp button{
+
+    padding:12px 22px;
+
+    border:none;
+
+    border-radius:var(--radius);
+
+    font-weight:700;
+
+    font-size:.82rem;
+
+    letter-spacing:.04em;
+
+    text-transform:uppercase;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+    font-family:var(--font-body);
+
+}
+
+.acoes-whatsapp button:hover{
+
+    transform:translateY(-2px);
+
+    filter:brightness(1.08);
+
+}

@@ -1118,3 +1118,189 @@ function linhaMovimentacao(item, limite){
     `;
 
 }
+
+// ========================================
+// RESUMO EXECUTIVO — WHATSAPP
+// Combina Horizontal + Vertical + Demanda de
+// Separação num texto único pronto pra colar.
+// ========================================
+
+function formatarPct(valor){
+
+    return valor.toLocaleString("pt-BR",{maximumFractionDigits:1}) + "%";
+
+}
+
+function blocoSecaoMovimentacao(titulo, emoji, dados, limite){
+
+    if(!dados.length){
+
+        return `${emoji} *${titulo}*\n   • Sem dados processados ainda\n`;
+
+    }
+
+    const kpis =
+    computarKpis(dados, limite);
+
+    return (
+        `${emoji} *${titulo}*\n` +
+        `   • Total: ${kpis.total.toLocaleString("pt-BR")}\n` +
+        `   • Críticas (≥${limite}min): ${kpis.criticas.toLocaleString("pt-BR")} (${formatarPct(kpis.pctCritico)})\n` +
+        `   • Maior tempo: ${formatarTempo(kpis.maiorTempo)}\n`
+    );
+
+}
+
+function blocoSecaoSeparacao(){
+
+    const dados =
+    dadosDemandaSeparacao;
+
+    if(!dados.length){
+
+        return `📦 *DEMANDA DE SEPARAÇÃO*\n   • Sem dados processados ainda\n`;
+
+    }
+
+    const totalAtividades =
+    dados.length;
+
+    const totalSorter =
+    dados.filter(d => d.tipo === "Sorter").length;
+
+    const pctSorter =
+    totalAtividades
+    ? (totalSorter / totalAtividades * 100)
+    : 0;
+
+    const mapa =
+    agruparDemandaSeparacao(dados);
+
+    const contagemPorLinha = new Map();
+
+    dados.forEach(item=>{
+
+        contagemPorLinha.set(
+            item.linha,
+            (contagemPorLinha.get(item.linha) || 0) + 1
+        );
+
+    });
+
+    let topLinha = "-";
+    let topLinhaQtd = 0;
+
+    contagemPorLinha.forEach((qtd, linha)=>{
+
+        if(qtd > topLinhaQtd){
+
+            topLinhaQtd = qtd;
+            topLinha = linha;
+
+        }
+
+    });
+
+    return (
+        `📦 *DEMANDA DE SEPARAÇÃO*\n` +
+        `   • Total de atividades: ${totalAtividades.toLocaleString("pt-BR")}\n` +
+        `   • Pavilhões ativos: ${mapa.size}\n` +
+        `   • % Sorter: ${formatarPct(pctSorter)}\n` +
+        `   • Linha com mais demanda: ${topLinhaQtd ? `${topLinha} (${topLinhaQtd})` : "-"}\n`
+    );
+
+}
+
+function blocoCombinado(){
+
+    const combinado = [
+        ...dadosHorizontal.map(d => ({...d, limite: limites.horizontal})),
+        ...dadosVertical.map(d => ({...d, limite: limites.vertical}))
+    ];
+
+    if(!combinado.length){
+
+        return "";
+
+    }
+
+    const total =
+    combinado.length;
+
+    const criticas =
+    combinado.filter(d => d.tempoMinutos >= d.limite).length;
+
+    const pctCritico =
+    total ? (criticas / total * 100) : 0;
+
+    const maiorTempo =
+    combinado.reduce((m,d) => Math.max(m, d.tempoMinutos), 0);
+
+    return (
+        `────────────────\n` +
+        `📊 *COMBINADO (Horizontal + Vertical)*\n` +
+        `   • Total: ${total.toLocaleString("pt-BR")}\n` +
+        `   • Críticas: ${criticas.toLocaleString("pt-BR")} (${formatarPct(pctCritico)})\n` +
+        `   • Maior tempo: ${formatarTempo(maiorTempo)}\n`
+    );
+
+}
+
+function gerarResumoExecutivo(){
+
+    const agora =
+    new Date().toLocaleString("pt-BR",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"numeric",
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+
+    let texto =
+    `📋 *RESUMO EXECUTIVO — APONTAMENTO DE ATIVIDADES*\n` +
+    `🗓️ ${agora}\n` +
+    `────────────────\n\n`;
+
+    texto += blocoSecaoMovimentacao(
+        "MOVIMENTAÇÃO HORIZONTAL", "🔄", dadosHorizontal, limites.horizontal
+    ) + "\n";
+
+    texto += blocoSecaoMovimentacao(
+        "MOVIMENTAÇÃO VERTICAL", "🔼", dadosVertical, limites.vertical
+    ) + "\n";
+
+    texto += blocoSecaoSeparacao() + "\n";
+
+    texto += blocoCombinado();
+
+    document.getElementById("textoResumoExecutivo").value = texto.trim();
+
+}
+
+function copiarResumoExecutivo(){
+
+    const campo =
+    document.getElementById("textoResumoExecutivo");
+
+    if(!campo.value.trim()){
+
+        gerarResumoExecutivo();
+
+    }
+
+    navigator.clipboard.writeText(campo.value)
+    .then(()=>{
+
+        alert("Resumo executivo copiado! Já pode colar no WhatsApp.");
+
+    })
+    .catch(()=>{
+
+        campo.select();
+        document.execCommand("copy");
+        alert("Resumo executivo copiado! Já pode colar no WhatsApp.");
+
+    });
+
+}
