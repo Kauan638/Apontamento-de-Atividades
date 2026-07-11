@@ -3,26 +3,24 @@
 // SINCRONIZAÇÃO AUTOMÁTICA — File System Access API
 //
 // Conecta a subpasta "Apontamento de Atividades" (dentro da
-// pasta mestre) uma única vez. Diferente dos outros projetos,
-// aqui são 3 seções INDEPENDENTES (cada uma processada e
-// renderizada separadamente), então a sincronização também
-// trata cada arquivo de forma independente:
-//   - nome contém "horizontal" (.txt) -> Movimentação Horizontal
-//   - nome contém "vertical"   (.txt) -> Movimentação Vertical
-//   - extensão .xlsx/.xls             -> Separação
+// pasta mestre) uma única vez. São 3 arquivos .txt INDEPENDENTES
+// (cada um processado e renderizado separadamente), identificados
+// por palavra-chave no nome:
+//   - nome contém "horizontal"        -> Movimentação Horizontal
+//   - nome contém "vertical"          -> Movimentação Vertical
+//   - nome contém "separac" (Demanda) -> Demanda de Separação por Pavilhão
 // Cada um só é reprocessado quando ELE MESMO muda — não
 // depende dos outros dois estarem presentes. Se só existir
 // 1 ou 2 dos 3 arquivos na pasta, sincroniza só os que achar.
 //
 // Reaproveita 100% da lógica já existente no projeto:
-// parseMovimentacao(texto, comSentido), parseSeparacao(buffer),
-// renderResultado(tipo).
+// parseMovimentacao(texto, comSentido), parseDemandaSeparacao(texto),
+// renderResultado(tipo), renderDemandaSeparacao(), atualizarArmazenagensPendentes().
 //
-// IMPORTANTE: renomeie os arquivos de movimentação na pasta
-// mestre pra conter "horizontal" ou "vertical" no nome
-// (ex: "Movimentacao_Horizontal.txt", "Vertical_hoje.txt").
-// O arquivo de Separação não precisa de palavra-chave, já
-// que é o único .xlsx/.xls da pasta.
+// IMPORTANTE: renomeie os arquivos na pasta mestre pra conter
+// "horizontal", "vertical" ou "separação"/"separacao" no nome
+// (ex: "Movimentacao_Horizontal.txt", "Vertical_hoje.txt",
+// "70 - Demanda Separação.txt").
 // ========================================================
 // ========================================================
 
@@ -186,15 +184,7 @@ function syncNormalizar(texto){
 
 const SYNC_PALAVRA_HORIZONTAL = "horizontal";
 const SYNC_PALAVRA_VERTICAL = "vertical";
-const SYNC_EXT_SEPARACAO = [".xlsx",".xls"];
-
-function syncTemExtensao(nome, lista){
-
-    const n = nome.toLowerCase();
-
-    return lista.some(ext=> n.endsWith(ext));
-
-}
+const SYNC_PALAVRA_SEPARACAO = "separac";
 
 async function syncVarrerPasta(){
 
@@ -208,18 +198,12 @@ async function syncVarrerPasta(){
 
         if(handle.kind !== "file") continue;
 
+        if(!nome.toLowerCase().endsWith(".txt")) continue;
+
         const nomeNormalizado = syncNormalizar(nome);
 
         if(
-            !syncArquivoSeparacaoHandle &&
-            syncTemExtensao(nome, SYNC_EXT_SEPARACAO)
-        ){
-
-            syncArquivoSeparacaoHandle = handle;
-
-        }else if(
             !syncArquivoHorizontalHandle &&
-            nome.toLowerCase().endsWith(".txt") &&
             nomeNormalizado.includes(SYNC_PALAVRA_HORIZONTAL)
         ){
 
@@ -227,11 +211,17 @@ async function syncVarrerPasta(){
 
         }else if(
             !syncArquivoVerticalHandle &&
-            nome.toLowerCase().endsWith(".txt") &&
             nomeNormalizado.includes(SYNC_PALAVRA_VERTICAL)
         ){
 
             syncArquivoVerticalHandle = handle;
+
+        }else if(
+            !syncArquivoSeparacaoHandle &&
+            nomeNormalizado.includes(SYNC_PALAVRA_SEPARACAO)
+        ){
+
+            syncArquivoSeparacaoHandle = handle;
 
         }
 
@@ -245,9 +235,10 @@ async function syncVarrerPasta(){
 
         alert(
             "Não encontrei nenhum arquivo reconhecível nessa pasta.\n\n" +
-            "Pra Movimentação, o nome precisa conter \"horizontal\" ou " +
-            '"vertical" (ex: "Movimentacao_Horizontal.txt").\n' +
-            "Pra Separação, basta ser um .xlsx/.xls."
+            "O nome do arquivo precisa conter \"horizontal\", " +
+            '"vertical" ou "separação"/"separacao" (ex: ' +
+            '"Movimentacao_Horizontal.txt", "Vertical_hoje.txt", ' +
+            '"70 - Demanda Separação.txt").'
         );
 
         return false;
@@ -323,18 +314,23 @@ async function syncProcessarSeparacao(){
         const arquivo =
         await syncArquivoSeparacaoHandle.getFile();
 
-        const buffer =
-        await arquivo.arrayBuffer();
+        const texto =
+        await syncLerComoTexto(arquivo, "ISO-8859-1");
 
-        dadosSeparacao =
-        parseSeparacao(buffer);
+        dadosDemandaSeparacao =
+        parseDemandaSeparacao(texto);
 
-        renderResultado("separacao");
+        renderDemandaSeparacao();
 
-        document.getElementById("nomeSeparacao").innerText =
+        atualizarArmazenagensPendentes();
+
+        document.getElementById("resultado-demanda-separacao")
+        ?.classList.remove("oculto");
+
+        document.getElementById("nomeDemandaSeparacao").innerText =
         "🔗 " + arquivo.name + " (auto)";
 
-        console.log("Sync: Separação atualizada");
+        console.log("Sync: Demanda de Separação atualizada");
 
     }catch(erro){
 

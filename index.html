@@ -14,9 +14,6 @@
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- XLSX -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 </head>
 
 <body>
@@ -374,159 +371,6 @@
         </div>
 
         <!-- ===================================== -->
-        <!-- SEPARAÇÃO -->
-        <!-- ===================================== -->
-
-        <div class="card">
-
-            <h2>
-                📦 Separação
-            </h2>
-
-            <div class="upload-area">
-
-                <div class="upload-box">
-
-                    <label>
-                        Arquivo (.xlsx)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoSeparacao">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoSeparacao"
-                        accept=".xlsx,.xls"
-                        onchange="nomeArquivoSelecionado('arquivoSeparacao','nomeSeparacao')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeSeparacao">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <br>
-
-            <div class="acoes">
-
-                <button
-                    class="btn-processar"
-                    onclick="processarSeparacao()">
-
-                    🚀 Processar Separação
-
-                </button>
-
-            </div>
-
-            <div
-                class="resultado-tipo oculto"
-                id="resultado-separacao">
-
-                <br>
-
-                <div class="limite-controle">
-
-                    <label>
-                        Crítico acima de
-                    </label>
-
-                    <input
-                        type="number"
-                        id="limiteSeparacao"
-                        value="240"
-                        min="0">
-
-                    <span style="color:var(--text-muted);font-size:.8rem;">
-                        minutos
-                    </span>
-
-                    <button
-                        class="btn-aplicar"
-                        onclick="aplicarLimite('separacao')">
-
-                        Aplicar
-
-                    </button>
-
-                </div>
-
-                <div class="kpis">
-
-                    <div class="kpi-card">
-                        <h3>Total de Tarefas</h3>
-                        <span id="kpiSeparacaoTotal">0</span>
-                    </div>
-
-                    <div class="kpi-card">
-                        <h3>Maior Tempo em Tela</h3>
-                        <span id="kpiSeparacaoMaior">0min</span>
-                    </div>
-
-                    <div class="kpi-card">
-                        <h3>% Crítico</h3>
-                        <span id="kpiSeparacaoPct">0%</span>
-                    </div>
-
-                    <div class="kpi-card">
-                        <h3>Tarefas Críticas</h3>
-                        <span id="kpiSeparacaoCriticas">0</span>
-                    </div>
-
-                </div>
-
-                <div
-                    class="top-tempos"
-                    id="topSeparacao">
-                </div>
-
-                <div class="tabela-container">
-
-                    <table class="tabela">
-
-                        <thead>
-                            <tr>
-                                <th>Prioridade</th>
-                                <th>Carga</th>
-                                <th>Box</th>
-                                <th>Palete</th>
-                                <th>Lote</th>
-                                <th>Agrupamento</th>
-                                <th>Linha</th>
-                                <th>Peso</th>
-                                <th>Volume (m³)</th>
-                                <th>Itens</th>
-                                <th>Volume (cx)</th>
-                                <th>Operação</th>
-                                <th>Tempo em Tela</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="corpoSeparacao">
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- ===================================== -->
         <!-- DEMANDA DE SEPARAÇÃO POR PAVILHÃO (PROJETO 6) -->
         <!-- ===================================== -->
 
@@ -537,66 +381,6 @@
             </h2>
 
             <div class="upload-area">
-
-                <div class="upload-box">
-
-                    <label>
-                        Movimentação Horizontal (.txt)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoDemandaHorizontal">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoDemandaHorizontal"
-                        accept=".txt"
-                        onchange="nomeArquivoSelecionado('arquivoDemandaHorizontal','nomeDemandaHorizontal')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeDemandaHorizontal">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
-
-                <div class="upload-box">
-
-                    <label>
-                        Movimentação Vertical (.txt)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoDemandaVertical">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoDemandaVertical"
-                        accept=".txt"
-                        onchange="nomeArquivoSelecionado('arquivoDemandaVertical','nomeDemandaVertical')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeDemandaVertical">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
 
                 <div class="upload-box">
 
@@ -688,7 +472,7 @@
                 </h3>
 
                 <p class="nota-secao">
-                    Baseado nos arquivos de Movimentação Horizontal e Vertical selecionados acima, neste mesmo card.
+                    Reaproveita os dados já processados nas seções de Movimentação Horizontal e Vertical acima. Processe-as (ou reprocesse) para atualizar aqui.
                 </p>
 
                 <div class="kpis kpis-compacto">
@@ -712,7 +496,7 @@
 
                 <div id="blocoArmazenagensPendentes">
                     <p class="vazio-estado">
-                        Nenhum arquivo de Movimentação Horizontal ou Vertical selecionado neste card.
+                        Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
                     </p>
                 </div>
 

@@ -5,10 +5,7 @@
 
 let dadosHorizontal = [];
 let dadosVertical = [];
-let dadosSeparacao = [];
 let dadosDemandaSeparacao = [];
-let dadosDemandaHorizontal = [];
-let dadosDemandaVertical = [];
 
 const ORDEM_PAVILHAO_SEPARACAO = [
     "Pavilhão 1",
@@ -19,8 +16,7 @@ const ORDEM_PAVILHAO_SEPARACAO = [
 
 const limites = {
     horizontal: 60,
-    vertical: 60,
-    separacao: 240
+    vertical: 60
 };
 
 
@@ -262,6 +258,8 @@ function processarHorizontal(){
 
         renderResultado("horizontal");
 
+        atualizarArmazenagensPendentes();
+
     };
 
     reader.onerror = ()=>{
@@ -306,6 +304,8 @@ function processarVertical(){
 
         renderResultado("vertical");
 
+        atualizarArmazenagensPendentes();
+
     };
 
     reader.onerror = ()=>{
@@ -323,137 +323,6 @@ function processarVertical(){
 
 }
 
-
-// ========================================
-// LEITURA — SEPARAÇÃO (XLSX)
-// ========================================
-
-function parseSeparacao(arrayBuffer){
-
-    const workbook =
-    XLSX.read(
-        arrayBuffer,
-        {type:"array"}
-    );
-
-    const planilha =
-    workbook.Sheets[
-        workbook.SheetNames[0]
-    ];
-
-    const linhas =
-    XLSX.utils.sheet_to_json(
-        planilha,
-        {
-            header: 1,
-            raw: true,
-            defval: null
-        }
-    );
-
-    const dados = [];
-
-    for(let i=1; i<linhas.length; i++){
-
-        const l = linhas[i];
-
-        if(!l || l[0] === null || l[0] === undefined){
-
-            continue;
-
-        }
-
-        const tempoRaw = l[13];
-
-        if(tempoRaw === null || tempoRaw === undefined || typeof tempoRaw !== "number"){
-
-            continue;
-
-        }
-
-        // Valor de tempo vem como célula de horário (h:mm) do Excel.
-        // Descartamos a parte inteira (dia-âncora, artefato do formato)
-        // e usamos só a fração do dia, convertida para minutos.
-        const fracaoDia =
-        tempoRaw - Math.floor(tempoRaw);
-
-        const tempoMinutos =
-        fracaoDia * 24 * 60;
-
-        dados.push({
-            prioridade: l[0] ?? "-",
-            carga: l[1] ?? "-",
-            dep: l[2] ?? "-",
-            box: l[3] ?? "-",
-            palete: l[4] ?? "-",
-            lote: l[5] ?? "-",
-            agrupamento: l[6] ?? "-",
-            linha: l[7] ?? "-",
-            peso: l[8] ?? 0,
-            volumeM3: l[9] ?? 0,
-            itens: l[10] ?? 0,
-            volumeCx: l[11] ?? 0,
-            operacao: l[12] ?? "-",
-            tempoMinutos
-        });
-
-    }
-
-    return dados;
-
-}
-
-function processarSeparacao(){
-
-    const input =
-    document.getElementById("arquivoSeparacao");
-
-    if(!input.files.length){
-
-        alert(
-            "Selecione o arquivo de Separação."
-        );
-
-        return;
-
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = e=>{
-
-        try{
-
-            dadosSeparacao =
-            parseSeparacao(e.target.result);
-
-            renderResultado("separacao");
-
-        }catch(erro){
-
-            console.error(erro);
-
-            alert(
-                "Não foi possível ler o arquivo de Separação. Verifique se é um .xlsx válido."
-            );
-
-        }
-
-    };
-
-    reader.onerror = ()=>{
-
-        alert(
-            "Não foi possível ler o arquivo de Separação."
-        );
-
-    };
-
-    reader.readAsArrayBuffer(
-        input.files[0]
-    );
-
-}
 
 
 // ========================================
@@ -588,36 +457,12 @@ function parseDemandaSeparacao(texto){
 
 }
 
-function lerArquivoComoTexto(file){
+function processarDemandaSeparacao(){
 
-    return new Promise((resolve, reject)=>{
-
-        const reader = new FileReader();
-
-        reader.onload = e => resolve(e.target.result);
-
-        reader.onerror = () => reject(
-            new Error("Falha ao ler o arquivo " + file.name)
-        );
-
-        reader.readAsText(file, "ISO-8859-1");
-
-    });
-
-}
-
-async function processarDemandaSeparacao(){
-
-    const inputSeparacao =
+    const input =
     document.getElementById("arquivoDemandaSeparacao");
 
-    const inputHorizontal =
-    document.getElementById("arquivoDemandaHorizontal");
-
-    const inputVertical =
-    document.getElementById("arquivoDemandaVertical");
-
-    if(!inputSeparacao.files.length){
+    if(!input.files.length){
 
         alert(
             "Selecione o arquivo da Consulta 70 - Demanda Separação."
@@ -627,59 +472,47 @@ async function processarDemandaSeparacao(){
 
     }
 
-    try{
+    const reader = new FileReader();
 
-        const textoSeparacao =
-        await lerArquivoComoTexto(inputSeparacao.files[0]);
+    reader.onload = e=>{
 
-        dadosDemandaSeparacao =
-        parseDemandaSeparacao(textoSeparacao);
+        try{
 
-        if(inputHorizontal.files.length){
+            dadosDemandaSeparacao =
+            parseDemandaSeparacao(e.target.result);
 
-            const textoHorizontal =
-            await lerArquivoComoTexto(inputHorizontal.files[0]);
+            renderDemandaSeparacao();
 
-            dadosDemandaHorizontal =
-            parseMovimentacao(textoHorizontal, false);
+            atualizarArmazenagensPendentes();
 
-        }else{
+            document.getElementById(
+                "resultado-demanda-separacao"
+            ).classList.remove("oculto");
 
-            dadosDemandaHorizontal = [];
+        }catch(erro){
 
-        }
+            console.error(erro);
 
-        if(inputVertical.files.length){
-
-            const textoVertical =
-            await lerArquivoComoTexto(inputVertical.files[0]);
-
-            dadosDemandaVertical =
-            parseMovimentacao(textoVertical, true);
-
-        }else{
-
-            dadosDemandaVertical = [];
+            alert(
+                "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
+            );
 
         }
 
-        renderDemandaSeparacao();
+    };
 
-        atualizarArmazenagensPendentes();
-
-        document.getElementById(
-            "resultado-demanda-separacao"
-        ).classList.remove("oculto");
-
-    }catch(erro){
-
-        console.error(erro);
+    reader.onerror = ()=>{
 
         alert(
-            "Não foi possível ler um dos arquivos selecionados. Verifique os arquivos e tente novamente."
+            "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
         );
 
-    }
+    };
+
+    reader.readAsText(
+        input.files[0],
+        "ISO-8859-1"
+    );
 
 }
 
@@ -982,8 +815,8 @@ function atualizarArmazenagensPendentes(){
     }
 
     const combinado = [
-        ...dadosDemandaHorizontal.map(d => ({...d, tipoMov:"Horizontal", limite:limites.horizontal})),
-        ...dadosDemandaVertical.map(d => ({...d, tipoMov:"Vertical", limite:limites.vertical}))
+        ...dadosHorizontal.map(d => ({...d, tipoMov:"Horizontal", limite:limites.horizontal})),
+        ...dadosVertical.map(d => ({...d, tipoMov:"Vertical", limite:limites.vertical}))
     ];
 
     const total =
@@ -1012,7 +845,7 @@ function atualizarArmazenagensPendentes(){
 
         container.innerHTML = `
         <p class="vazio-estado">
-            Nenhum arquivo de Movimentação Horizontal ou Vertical selecionado neste card.
+            Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
         </p>
         `;
 
@@ -1170,15 +1003,6 @@ function renderResultado(tipo){
             topContainer: "topVertical",
             linhaHtml: linhaMovimentacao,
             topLinha: item => `${item.sku} — ${item.descricao} (P${item.p})`
-        },
-
-        separacao: {
-            dados: dadosSeparacao,
-            prefixoKpi: "kpiSeparacao",
-            corpoTabela: "corpoSeparacao",
-            topContainer: "topSeparacao",
-            linhaHtml: linhaSeparacao,
-            topLinha: item => `Carga ${item.carga} — Box ${item.box} — ${item.agrupamento}`
         }
 
     };
@@ -1284,36 +1108,6 @@ function linhaMovimentacao(item, limite){
         ${colunaSentido}
         <td>${item.sku}</td>
         <td style="text-align:left;">${item.descricao}</td>
-        <td class="col-tempo">${formatarTempo(item.tempoMinutos)}</td>
-        <td>
-            <span class="badge ${critico ? "badge-critico" : "badge-ok"}">
-                ${critico ? "Crítico" : "OK"}
-            </span>
-        </td>
-    </tr>
-    `;
-
-}
-
-function linhaSeparacao(item, limite){
-
-    const critico =
-    item.tempoMinutos >= limite;
-
-    return `
-    <tr class="${critico ? "linha-critica" : ""}">
-        <td>${item.prioridade}</td>
-        <td>${item.carga}</td>
-        <td>${item.box}</td>
-        <td>${item.palete}</td>
-        <td>${item.lote}</td>
-        <td style="text-align:left;">${item.agrupamento}</td>
-        <td style="text-align:left;">${item.linha}</td>
-        <td>${Number(item.peso).toLocaleString("pt-BR",{maximumFractionDigits:2})}</td>
-        <td>${Number(item.volumeM3).toLocaleString("pt-BR",{maximumFractionDigits:4})}</td>
-        <td>${item.itens}</td>
-        <td>${item.volumeCx}</td>
-        <td>${item.operacao}</td>
         <td class="col-tempo">${formatarTempo(item.tempoMinutos)}</td>
         <td>
             <span class="badge ${critico ? "badge-critico" : "badge-ok"}">
