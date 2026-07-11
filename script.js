@@ -6,6 +6,14 @@
 let dadosHorizontal = [];
 let dadosVertical = [];
 let dadosSeparacao = [];
+let dadosDemandaSeparacao = [];
+
+const ORDEM_PAVILHAO_SEPARACAO = [
+    "Pavilhão 1",
+    "Pavilhão 2",
+    "Sorter",
+    "Câmara Fria / Outros"
+];
 
 const limites = {
     horizontal: 60,
@@ -252,6 +260,8 @@ function processarHorizontal(){
 
         renderResultado("horizontal");
 
+        atualizarArmazenagensPendentes();
+
     };
 
     reader.onerror = ()=>{
@@ -295,6 +305,8 @@ function processarVertical(){
         );
 
         renderResultado("vertical");
+
+        atualizarArmazenagensPendentes();
 
     };
 
@@ -442,6 +454,641 @@ function processarSeparacao(){
     reader.readAsArrayBuffer(
         input.files[0]
     );
+
+}
+
+
+// ========================================
+// LEITURA — DEMANDA DE SEPARAÇÃO POR PAVILHÃO
+// (Consulta 70 - Demanda Separação, .txt ; ISO-8859-1)
+// ========================================
+
+function normalizarTexto(str){
+
+    return (str || "")
+    .toString()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+}
+
+function derivarPavilhaoSeparacao(linhaSeparacao){
+
+    const l =
+    normalizarTexto(linhaSeparacao);
+
+    if(l.startsWith("PV1")){
+
+        return "Pavilhão 1";
+
+    }
+
+    if(l.startsWith("PV2")){
+
+        return "Pavilhão 2";
+
+    }
+
+    if(l.includes("SORTER")){
+
+        return "Sorter";
+
+    }
+
+    return "Câmara Fria / Outros";
+
+}
+
+function derivarTipoSeparacao(destino){
+
+    const d =
+    normalizarTexto(destino);
+
+    if(d.includes("NAO SORTER")){
+
+        return "Não Sorter";
+
+    }
+
+    if(d.includes("SORTER")){
+
+        return "Sorter";
+
+    }
+
+    return "Outros";
+
+}
+
+function parseDemandaSeparacao(texto){
+
+    const linhasArq =
+    texto
+    .split(/\r?\n/)
+    .filter(l => l.trim().length);
+
+    linhasArq.shift();
+
+    const dados = [];
+
+    linhasArq.forEach(linha=>{
+
+        const c =
+        linha.split(";");
+
+        if(c.length < 17){
+
+            return;
+
+        }
+
+        const [
+            box, codTip, indModo, nroCarga, nroEmpresa,
+            destino, codDep, nroPalete, seqLote, linhaSep,
+            pesoRaw, volRaw, itensRaw, volCxRaw,
+            dtGeracao, dtGeraPalete, dtRetirada
+        ] = c;
+
+        const peso =
+        parseFloat(
+            (pesoRaw || "0").replace(",",".")
+        ) || 0;
+
+        const volumeM3 =
+        parseFloat(
+            (volRaw || "0").replace(",",".")
+        ) || 0;
+
+        const itens =
+        parseInt(itensRaw, 10) || 0;
+
+        const volumeCx =
+        parseInt(volCxRaw, 10) || 0;
+
+        dados.push({
+            box: box || "-",
+            carga: nroCarga || "-",
+            destino: destino || "-",
+            coddep: codDep || "-",
+            palete: nroPalete || "-",
+            lote: seqLote || "-",
+            linha: linhaSep || "-",
+            pavilhao: derivarPavilhaoSeparacao(linhaSep),
+            tipo: derivarTipoSeparacao(destino),
+            peso,
+            volumeM3,
+            itens,
+            volumeCx,
+            dtGeracao: dtGeracao || "-",
+            dtRetirada: dtRetirada || "-"
+        });
+
+    });
+
+    return dados;
+
+}
+
+function processarDemandaSeparacao(){
+
+    const input =
+    document.getElementById("arquivoDemandaSeparacao");
+
+    if(!input.files.length){
+
+        alert(
+            "Selecione o arquivo da Consulta 70 - Demanda Separação."
+        );
+
+        return;
+
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = e=>{
+
+        try{
+
+            dadosDemandaSeparacao =
+            parseDemandaSeparacao(e.target.result);
+
+            renderDemandaSeparacao();
+
+            atualizarArmazenagensPendentes();
+
+            document.getElementById(
+                "resultado-demanda-separacao"
+            ).classList.remove("oculto");
+
+        }catch(erro){
+
+            console.error(erro);
+
+            alert(
+                "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
+            );
+
+        }
+
+    };
+
+    reader.onerror = ()=>{
+
+        alert(
+            "Não foi possível ler o arquivo da Consulta 70 - Demanda Separação."
+        );
+
+    };
+
+    reader.readAsText(
+        input.files[0],
+        "ISO-8859-1"
+    );
+
+}
+
+
+// ========================================
+// RENDERIZAÇÃO — DEMANDA DE SEPARAÇÃO POR PAVILHÃO
+// ========================================
+
+function agruparDemandaSeparacao(dados){
+
+    const mapa = new Map();
+
+    dados.forEach(item=>{
+
+        if(!mapa.has(item.pavilhao)){
+
+            mapa.set(item.pavilhao, new Map());
+
+        }
+
+        const porLinha =
+        mapa.get(item.pavilhao);
+
+        if(!porLinha.has(item.linha)){
+
+            porLinha.set(item.linha, {
+                sorter: [],
+                naoSorter: [],
+                outros: []
+            });
+
+        }
+
+        const grupo =
+        porLinha.get(item.linha);
+
+        if(item.tipo === "Sorter"){
+
+            grupo.sorter.push(item);
+
+        }else if(item.tipo === "Não Sorter"){
+
+            grupo.naoSorter.push(item);
+
+        }else{
+
+            grupo.outros.push(item);
+
+        }
+
+    });
+
+    return mapa;
+
+}
+
+function ordenarChavesPavilhao(mapa){
+
+    const chaves =
+    [...mapa.keys()];
+
+    return chaves.sort((a,b)=>{
+
+        const ia =
+        ORDEM_PAVILHAO_SEPARACAO.indexOf(a);
+
+        const ib =
+        ORDEM_PAVILHAO_SEPARACAO.indexOf(b);
+
+        if(ia === -1 && ib === -1){
+
+            return a.localeCompare(b);
+
+        }
+
+        if(ia === -1){
+
+            return 1;
+
+        }
+
+        if(ib === -1){
+
+            return -1;
+
+        }
+
+        return ia - ib;
+
+    });
+
+}
+
+function renderDemandaSeparacao(){
+
+    const dados =
+    dadosDemandaSeparacao;
+
+    const totalAtividades =
+    dados.length;
+
+    const totalSorter =
+    dados.filter(d => d.tipo === "Sorter").length;
+
+    const pctSorter =
+    totalAtividades
+    ? (totalSorter / totalAtividades * 100)
+    : 0;
+
+    const mapa =
+    agruparDemandaSeparacao(dados);
+
+    document.getElementById("kpiDemandaTotal").innerText =
+    totalAtividades.toLocaleString("pt-BR");
+
+    document.getElementById("kpiDemandaPavilhoes").innerText =
+    mapa.size.toLocaleString("pt-BR");
+
+    document.getElementById("kpiDemandaSorterPct").innerText =
+    pctSorter.toLocaleString("pt-BR",{maximumFractionDigits:1}) + "%";
+
+    // linha com mais atividades (agregando todos os pavilhões)
+    const contagemPorLinha = new Map();
+
+    dados.forEach(item=>{
+
+        contagemPorLinha.set(
+            item.linha,
+            (contagemPorLinha.get(item.linha) || 0) + 1
+        );
+
+    });
+
+    let topLinha = "-";
+    let topLinhaQtd = 0;
+
+    contagemPorLinha.forEach((qtd, linha)=>{
+
+        if(qtd > topLinhaQtd){
+
+            topLinhaQtd = qtd;
+            topLinha = linha;
+
+        }
+
+    });
+
+    document.getElementById("kpiDemandaTopLinha").innerText =
+    topLinhaQtd
+    ? `${topLinha} (${topLinhaQtd})`
+    : "-";
+
+    const container =
+    document.getElementById("blocoPavilhoesSeparacao");
+
+    if(!totalAtividades){
+
+        container.innerHTML = `
+        <p class="vazio-estado">
+            Nenhuma atividade encontrada no arquivo.
+        </p>
+        `;
+
+        return;
+
+    }
+
+    const chaves =
+    ordenarChavesPavilhao(mapa);
+
+    container.innerHTML =
+    chaves.map(pavilhao=>{
+
+        const porLinha =
+        mapa.get(pavilhao);
+
+        let totalPavilhao = 0;
+        let pesoPavilhao = 0;
+        let volumePavilhao = 0;
+        let itensPavilhao = 0;
+
+        const linhasOrdenadas =
+        [...porLinha.entries()]
+        .map(([linha, grupo])=>{
+
+            const todos =
+            [...grupo.sorter, ...grupo.naoSorter, ...grupo.outros];
+
+            const totalLinha =
+            todos.length;
+
+            const peso =
+            todos.reduce((s,i)=>s+i.peso,0);
+
+            const volumeM3 =
+            todos.reduce((s,i)=>s+i.volumeM3,0);
+
+            const itens =
+            todos.reduce((s,i)=>s+i.itens,0);
+
+            const volumeCx =
+            todos.reduce((s,i)=>s+i.volumeCx,0);
+
+            totalPavilhao += totalLinha;
+            pesoPavilhao += peso;
+            volumePavilhao += volumeM3;
+            itensPavilhao += itens;
+
+            return {
+                linha,
+                sorter: grupo.sorter.length,
+                naoSorter: grupo.naoSorter.length,
+                outros: grupo.outros.length,
+                totalLinha,
+                peso,
+                volumeM3,
+                itens,
+                volumeCx
+            };
+
+        })
+        .sort((a,b) => b.totalLinha - a.totalLinha);
+
+        const linhasHtml =
+        linhasOrdenadas.map(l => `
+        <tr>
+            <td style="text-align:left;">${l.linha}</td>
+            <td>${l.sorter}</td>
+            <td>${l.naoSorter}</td>
+            <td>${l.outros}</td>
+            <td class="col-tempo">${l.totalLinha}</td>
+            <td>${l.peso.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td>
+            <td>${l.volumeM3.toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+            <td>${l.itens.toLocaleString("pt-BR")}</td>
+            <td>${l.volumeCx.toLocaleString("pt-BR")}</td>
+        </tr>
+        `).join("");
+
+        return `
+        <div class="grupo-pavilhao">
+
+            <div class="grupo-pavilhao-header">
+                <h3>${pavilhao}</h3>
+                <span class="badge-pavilhao">${totalPavilhao.toLocaleString("pt-BR")} atividades</span>
+            </div>
+
+            <div class="tabela-container">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Linha de Separação</th>
+                            <th>Sorter</th>
+                            <th>Não Sorter</th>
+                            <th>Outros</th>
+                            <th>Total</th>
+                            <th>Peso (kg)</th>
+                            <th>Volume (m³)</th>
+                            <th>Itens</th>
+                            <th>Volume (cx)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasHtml}
+                        <tr class="linha-total-pavilhao">
+                            <td style="text-align:left;">Total ${pavilhao}</td>
+                            <td colspan="2"></td>
+                            <td></td>
+                            <td class="col-tempo">${totalPavilhao.toLocaleString("pt-BR")}</td>
+                            <td>${pesoPavilhao.toLocaleString("pt-BR",{maximumFractionDigits:1})}</td>
+                            <td>${volumePavilhao.toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+                            <td>${itensPavilhao.toLocaleString("pt-BR")}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+        `;
+
+    }).join("");
+
+}
+
+
+// ========================================
+// ARMAZENAGENS PENDENTES POR PAVILHÃO
+// (reaproveita dadosHorizontal / dadosVertical já processados)
+// ========================================
+
+function atualizarArmazenagensPendentes(){
+
+    const container =
+    document.getElementById("blocoArmazenagensPendentes");
+
+    if(!container){
+
+        return;
+
+    }
+
+    const combinado = [
+        ...dadosHorizontal.map(d => ({...d, tipoMov:"Horizontal", limite:limites.horizontal})),
+        ...dadosVertical.map(d => ({...d, tipoMov:"Vertical", limite:limites.vertical}))
+    ];
+
+    const total =
+    combinado.length;
+
+    const criticas =
+    combinado.filter(d => d.tempoMinutos >= d.limite).length;
+
+    const maiorTempo =
+    combinado.reduce((m,d) => Math.max(m, d.tempoMinutos), 0);
+
+    const kpiTotal =
+    document.getElementById("kpiArmzTotal");
+
+    const kpiCriticas =
+    document.getElementById("kpiArmzCriticas");
+
+    const kpiMaior =
+    document.getElementById("kpiArmzMaior");
+
+    if(kpiTotal) kpiTotal.innerText = total.toLocaleString("pt-BR");
+    if(kpiCriticas) kpiCriticas.innerText = criticas.toLocaleString("pt-BR");
+    if(kpiMaior) kpiMaior.innerText = formatarTempo(maiorTempo);
+
+    if(!total){
+
+        container.innerHTML = `
+        <p class="vazio-estado">
+            Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
+        </p>
+        `;
+
+        return;
+
+    }
+
+    const porPavilhao = new Map();
+
+    combinado.forEach(item=>{
+
+        const chave =
+        "Pavilhão " + (item.p || "-");
+
+        if(!porPavilhao.has(chave)){
+
+            porPavilhao.set(chave, []);
+
+        }
+
+        porPavilhao.get(chave).push(item);
+
+    });
+
+    const chaves =
+    [...porPavilhao.keys()]
+    .sort((a,b)=>{
+
+        const na = parseInt(a.replace(/\D/g,""),10);
+        const nb = parseInt(b.replace(/\D/g,""),10);
+
+        if(isNaN(na) || isNaN(nb)){
+
+            return a.localeCompare(b);
+
+        }
+
+        return na - nb;
+
+    });
+
+    container.innerHTML =
+    chaves.map(chave=>{
+
+        const itens =
+        [...porPavilhao.get(chave)]
+        .sort((a,b) => b.tempoMinutos - a.tempoMinutos);
+
+        const criticasGrupo =
+        itens.filter(i => i.tempoMinutos >= i.limite).length;
+
+        const linhasHtml =
+        itens.map(i=>{
+
+            const critico =
+            i.tempoMinutos >= i.limite;
+
+            return `
+            <tr class="${critico ? "linha-critica" : ""}">
+                <td>${i.tipoMov}</td>
+                <td>${i.origem}</td>
+                <td>${i.destino}</td>
+                <td>${i.sentido || "-"}</td>
+                <td>${i.sku}</td>
+                <td style="text-align:left;">${i.descricao}</td>
+                <td class="col-tempo">${formatarTempo(i.tempoMinutos)}</td>
+                <td>
+                    <span class="badge ${critico ? "badge-critico" : "badge-ok"}">
+                        ${critico ? "Crítico" : "OK"}
+                    </span>
+                </td>
+            </tr>
+            `;
+
+        }).join("");
+
+        return `
+        <div class="grupo-pavilhao">
+
+            <div class="grupo-pavilhao-header">
+                <h3>${chave}</h3>
+                <span class="badge-pavilhao">
+                    ${itens.length.toLocaleString("pt-BR")} pendentes${criticasGrupo ? ` · ${criticasGrupo} críticas` : ""}
+                </span>
+            </div>
+
+            <div class="tabela-container">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Origem</th>
+                            <th>Destino</th>
+                            <th>Sentido</th>
+                            <th>SKU</th>
+                            <th>Descrição</th>
+                            <th>Tempo Pendente</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasHtml}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+        `;
+
+    }).join("");
 
 }
 

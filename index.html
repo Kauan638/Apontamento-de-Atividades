@@ -526,6 +526,140 @@
 
         </div>
 
+        <!-- ===================================== -->
+        <!-- DEMANDA DE SEPARAÇÃO POR PAVILHÃO (PROJETO 6) -->
+        <!-- ===================================== -->
+
+        <div class="card">
+
+            <h2>
+                🗂️ Demanda de Separação por Pavilhão
+            </h2>
+
+            <div class="upload-area">
+
+                <div class="upload-box">
+
+                    <label>
+                        Consulta 70 — Demanda Separação (.txt)
+                    </label>
+
+                    <label
+                        class="upload-btn"
+                        for="arquivoDemandaSeparacao">
+
+                        Selecionar Arquivo
+
+                    </label>
+
+                    <input
+                        type="file"
+                        id="arquivoDemandaSeparacao"
+                        accept=".txt"
+                        onchange="nomeArquivoSelecionado('arquivoDemandaSeparacao','nomeDemandaSeparacao')">
+
+                    <div
+                        class="upload-nome"
+                        id="nomeDemandaSeparacao">
+
+                        Nenhum arquivo selecionado
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <br>
+
+            <div class="acoes">
+
+                <button
+                    class="btn-processar"
+                    onclick="processarDemandaSeparacao()">
+
+                    🚀 Processar Demanda
+
+                </button>
+
+            </div>
+
+            <div
+                class="resultado-tipo oculto"
+                id="resultado-demanda-separacao">
+
+                <br>
+
+                <div class="kpis">
+
+                    <div class="kpi-card">
+                        <h3>Total de Atividades</h3>
+                        <span id="kpiDemandaTotal">0</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <h3>Pavilhões Ativos</h3>
+                        <span id="kpiDemandaPavilhoes">0</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <h3>% Sorter</h3>
+                        <span id="kpiDemandaSorterPct">0%</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <h3>Linha com Mais Atividades</h3>
+                        <span id="kpiDemandaTopLinha" class="kpi-texto">-</span>
+                    </div>
+
+                </div>
+
+                <h3 class="subtitulo-secao">
+                    📍 Separação por Pavilhão
+                </h3>
+
+                <div id="blocoPavilhoesSeparacao">
+                </div>
+
+                <br>
+
+                <h3 class="subtitulo-secao">
+                    📦 Armazenagens Pendentes por Pavilhão
+                </h3>
+
+                <p class="nota-secao">
+                    Reaproveita os dados já processados nas seções de Movimentação Horizontal e Vertical acima. Processe-as (ou reprocesse) para atualizar aqui.
+                </p>
+
+                <div class="kpis kpis-compacto">
+
+                    <div class="kpi-card">
+                        <h3>Total Pendentes</h3>
+                        <span id="kpiArmzTotal">0</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <h3>Pendências Críticas</h3>
+                        <span id="kpiArmzCriticas">0</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <h3>Maior Tempo Pendente</h3>
+                        <span id="kpiArmzMaior">0min</span>
+                    </div>
+
+                </div>
+
+                <div id="blocoArmazenagensPendentes">
+                    <p class="vazio-estado">
+                        Nenhum dado carregado ainda. Processe as seções de Movimentação Horizontal e/ou Vertical acima.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
     <script src="script.js"></script>
