@@ -1223,56 +1223,54 @@ function blocoSecaoSeparacao(){
 
     if(!dados.length){
 
-        return `📦 *DEMANDA DE SEPARAÇÃO*\n   • Sem dados processados ainda\n`;
+        return `📦 *DEMANDA DE SEPARAÇÃO*\n\nSem dados processados ainda.\n`;
 
     }
 
-    const totalAtividades =
-    dados.length;
+    const categorias = [
+        {
+            titulo: "Picking Sorter",
+            filtro: d => d.tipo === "Sorter"
+        },
+        {
+            titulo: "Picking Não Sorter",
+            filtro: d => d.tipo === "Não Sorter"
+        },
+        {
+            titulo: "Bebidas",
+            filtro: d => parseInt(d.coddep, 10) === 3
+        },
+        {
+            titulo: "Perecíveis",
+            filtro: d => parseInt(d.coddep, 10) === 2
+        }
+    ];
 
-    const totalSorter =
-    dados.filter(d => d.tipo === "Sorter").length;
+    let texto =
+    `📦 *DEMANDA DE SEPARAÇÃO*\n\n`;
 
-    const pctSorter =
-    totalAtividades
-    ? (totalSorter / totalAtividades * 100)
-    : 0;
+    categorias.forEach(cat=>{
 
-    const mapa =
-    agruparDemandaSeparacao(dados);
+        const itensCategoria =
+        dados.filter(cat.filtro);
 
-    const contagemPorLinha = new Map();
+        const tarefas =
+        itensCategoria.length;
 
-    dados.forEach(item=>{
-
-        contagemPorLinha.set(
-            item.linha,
-            (contagemPorLinha.get(item.linha) || 0) + 1
+        const volumes =
+        itensCategoria.reduce(
+            (soma, d) => soma + d.volumeCx,
+            0
         );
 
-    });
-
-    let topLinha = "-";
-    let topLinhaQtd = 0;
-
-    contagemPorLinha.forEach((qtd, linha)=>{
-
-        if(qtd > topLinhaQtd){
-
-            topLinhaQtd = qtd;
-            topLinha = linha;
-
-        }
+        texto +=
+        `*${cat.titulo}*\n` +
+        `Tarefas   ${tarefas.toLocaleString("pt-BR")}\n` +
+        `Volumes   ${volumes.toLocaleString("pt-BR")}\n\n`;
 
     });
 
-    return (
-        `📦 *DEMANDA DE SEPARAÇÃO*\n` +
-        `   • Total de atividades: ${totalAtividades.toLocaleString("pt-BR")}\n` +
-        `   • Pavilhões ativos: ${mapa.size}\n` +
-        `   • % Sorter: ${formatarPct(pctSorter)}\n` +
-        `   • Linha com mais demanda: ${topLinhaQtd ? `${topLinha} (${topLinhaQtd})` : "-"}\n`
-    );
+    return texto;
 
 }
 
