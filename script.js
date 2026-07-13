@@ -128,14 +128,18 @@ function computarKpis(dados, limite){
 
 }
 
-function montarTopTempos(dadosOrdenados, formatarLinha){
+function montarTopTempos(dadosOrdenados, formatarLinha, quantidade){
 
     const top =
-    dadosOrdenados.slice(0,3);
+    dadosOrdenados.slice(0, quantidade || 5);
 
     if(!top.length){
 
-        return "";
+        return `
+        <p class="vazio-estado">
+            Processe o arquivo para ver o Top 5.
+        </p>
+        `;
 
     }
 
@@ -146,11 +150,53 @@ function montarTopTempos(dadosOrdenados, formatarLinha){
 
     top.forEach((item,indice)=>{
 
+        const selo =
+        medalhas[indice] || `${indice+1}º`;
+
         html += `
         <div class="top-item top-${indice+1}">
-            <span class="medalha">${medalhas[indice]}</span>
+            <span class="medalha">${selo}</span>
             <span class="top-info">${formatarLinha(item)}</span>
             <span class="top-tempo">${formatarTempo(item.tempoMinutos)}</span>
+        </div>
+        `;
+
+    });
+
+    return html;
+
+}
+
+function montarTopContagem(itensOrdenados, formatarLinha, formatarValor, quantidade){
+
+    const top =
+    itensOrdenados.slice(0, quantidade || 5);
+
+    if(!top.length){
+
+        return `
+        <p class="vazio-estado">
+            Processe o arquivo para ver o Top 5.
+        </p>
+        `;
+
+    }
+
+    const medalhas =
+    ["🥇","🥈","🥉"];
+
+    let html = "";
+
+    top.forEach((item,indice)=>{
+
+        const selo =
+        medalhas[indice] || `${indice+1}º`;
+
+        html += `
+        <div class="top-item top-${indice+1}">
+            <span class="medalha">${selo}</span>
+            <span class="top-info">${formatarLinha(item)}</span>
+            <span class="top-tempo">${formatarValor(item)}</span>
         </div>
         `;
 
@@ -664,6 +710,25 @@ function renderDemandaSeparacao(){
     topLinhaQtd
     ? `${topLinha} (${topLinhaQtd})`
     : "-";
+
+    const topLinhasOrdenadas =
+    [...contagemPorLinha.entries()]
+    .map(([linha, qtd]) => ({linha, qtd}))
+    .sort((a,b) => b.qtd - a.qtd);
+
+    const topDemandaEl =
+    document.getElementById("topDemanda");
+
+    if(topDemandaEl){
+
+        topDemandaEl.innerHTML =
+        montarTopContagem(
+            topLinhasOrdenadas,
+            item => item.linha,
+            item => `${item.qtd} ativ.`
+        );
+
+    }
 
     const container =
     document.getElementById("blocoPavilhoesSeparacao");

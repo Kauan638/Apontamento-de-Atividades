@@ -78,6 +78,230 @@
         </div>
 
         <!-- ===================================== -->
+        <!-- UPLOAD DOS ARQUIVOS (3 LADO A LADO) -->
+        <!-- ===================================== -->
+
+        <div class="card">
+
+            <h2>
+                📥 Upload dos Arquivos
+            </h2>
+
+            <div class="upload-grid-3">
+
+                <div class="upload-coluna">
+
+                    <h3>📐 Movimentação Horizontal</h3>
+
+                    <div class="upload-box">
+
+                        <label>
+                            Arquivo (.txt)
+                        </label>
+
+                        <label
+                            class="upload-btn"
+                            for="arquivoHorizontal">
+
+                            Selecionar Arquivo
+
+                        </label>
+
+                        <input
+                            type="file"
+                            id="arquivoHorizontal"
+                            accept=".txt"
+                            onchange="nomeArquivoSelecionado('arquivoHorizontal','nomeHorizontal')">
+
+                        <div
+                            class="upload-nome"
+                            id="nomeHorizontal">
+
+                            Nenhum arquivo selecionado
+
+                        </div>
+
+                    </div>
+
+                    <div class="acoes">
+
+                        <button
+                            class="btn-processar"
+                            onclick="processarHorizontal()">
+
+                            🚀 Processar Horizontal
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="upload-coluna">
+
+                    <h3>🏗️ Movimentação Vertical</h3>
+
+                    <div class="upload-box">
+
+                        <label>
+                            Arquivo (.txt)
+                        </label>
+
+                        <label
+                            class="upload-btn"
+                            for="arquivoVertical">
+
+                            Selecionar Arquivo
+
+                        </label>
+
+                        <input
+                            type="file"
+                            id="arquivoVertical"
+                            accept=".txt"
+                            onchange="nomeArquivoSelecionado('arquivoVertical','nomeVertical')">
+
+                        <div
+                            class="upload-nome"
+                            id="nomeVertical">
+
+                            Nenhum arquivo selecionado
+
+                        </div>
+
+                    </div>
+
+                    <div class="acoes">
+
+                        <button
+                            class="btn-processar"
+                            onclick="processarVertical()">
+
+                            🚀 Processar Vertical
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="upload-coluna">
+
+                    <h3>🗂️ Demanda de Separação</h3>
+
+                    <div class="upload-box">
+
+                        <label>
+                            Consulta 70 (.txt)
+                        </label>
+
+                        <label
+                            class="upload-btn"
+                            for="arquivoDemandaSeparacao">
+
+                            Selecionar Arquivo
+
+                        </label>
+
+                        <input
+                            type="file"
+                            id="arquivoDemandaSeparacao"
+                            accept=".txt"
+                            onchange="nomeArquivoSelecionado('arquivoDemandaSeparacao','nomeDemandaSeparacao')">
+
+                        <div
+                            class="upload-nome"
+                            id="nomeDemandaSeparacao">
+
+                            Nenhum arquivo selecionado
+
+                        </div>
+
+                    </div>
+
+                    <div class="acoes">
+
+                        <button
+                            class="btn-processar"
+                            onclick="processarDemandaSeparacao()">
+
+                            🚀 Processar Demanda
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- TOP 5 POR MOVIMENTAÇÃO -->
+        <!-- ===================================== -->
+
+        <div class="card">
+
+            <h2>
+                🏆 Top 5 por Movimentação
+            </h2>
+
+            <div class="top5-grid-3">
+
+                <div class="top5-coluna">
+
+                    <h3>📐 Horizontal</h3>
+
+                    <div
+                        class="top-tempos"
+                        id="topHorizontal">
+
+                        <p class="vazio-estado">
+                            Processe o arquivo para ver o Top 5.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="top5-coluna">
+
+                    <h3>🏗️ Vertical</h3>
+
+                    <div
+                        class="top-tempos"
+                        id="topVertical">
+
+                        <p class="vazio-estado">
+                            Processe o arquivo para ver o Top 5.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="top5-coluna">
+
+                    <h3>🗂️ Demanda Separação</h3>
+
+                    <div
+                        class="top-tempos"
+                        id="topDemanda">
+
+                        <p class="vazio-estado">
+                            Processe o arquivo para ver o Top 5.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
         <!-- RESUMO EXECUTIVO — WHATSAPP -->
         <!-- ===================================== -->
 
@@ -124,65 +348,15 @@
         </div>
 
         <!-- ===================================== -->
-        <!-- MOVIMENTAÇÃO HORIZONTAL -->
+        <!-- MOVIMENTAÇÃO HORIZONTAL — DETALHES -->
         <!-- ===================================== -->
 
-        <div class="card">
+        <details class="card detalhes-card">
 
-            <h2>
-                📐 Movimentação Horizontal
-            </h2>
-
-            <div class="upload-area">
-
-                <div class="upload-box">
-
-                    <label>
-                        Arquivo (.txt)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoHorizontal">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoHorizontal"
-                        accept=".txt"
-                        onchange="nomeArquivoSelecionado('arquivoHorizontal','nomeHorizontal')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeHorizontal">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <br>
-
-            <div class="acoes">
-
-                <button
-                    class="btn-processar"
-                    onclick="processarHorizontal()">
-
-                    🚀 Processar Horizontal
-
-                </button>
-
-            </div>
+            <summary>📐 Detalhes completos — Movimentação Horizontal</summary>
 
             <div
-                class="resultado-tipo oculto"
+                class="resultado-tipo"
                 id="resultado-horizontal">
 
                 <br>
@@ -237,11 +411,6 @@
 
                 </div>
 
-                <div
-                    class="top-tempos"
-                    id="topHorizontal">
-                </div>
-
                 <div class="tabela-container">
 
                     <table class="tabela">
@@ -267,68 +436,18 @@
 
             </div>
 
-        </div>
+        </details>
 
         <!-- ===================================== -->
-        <!-- MOVIMENTAÇÃO VERTICAL -->
+        <!-- MOVIMENTAÇÃO VERTICAL — DETALHES -->
         <!-- ===================================== -->
 
-        <div class="card">
+        <details class="card detalhes-card">
 
-            <h2>
-                🏗️ Movimentação Vertical
-            </h2>
-
-            <div class="upload-area">
-
-                <div class="upload-box">
-
-                    <label>
-                        Arquivo (.txt)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoVertical">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoVertical"
-                        accept=".txt"
-                        onchange="nomeArquivoSelecionado('arquivoVertical','nomeVertical')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeVertical">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <br>
-
-            <div class="acoes">
-
-                <button
-                    class="btn-processar"
-                    onclick="processarVertical()">
-
-                    🚀 Processar Vertical
-
-                </button>
-
-            </div>
+            <summary>🏗️ Detalhes completos — Movimentação Vertical</summary>
 
             <div
-                class="resultado-tipo oculto"
+                class="resultado-tipo"
                 id="resultado-vertical">
 
                 <br>
@@ -383,11 +502,6 @@
 
                 </div>
 
-                <div
-                    class="top-tempos"
-                    id="topVertical">
-                </div>
-
                 <div class="tabela-container">
 
                     <table class="tabela">
@@ -414,68 +528,18 @@
 
             </div>
 
-        </div>
+        </details>
 
         <!-- ===================================== -->
-        <!-- DEMANDA DE SEPARAÇÃO POR PAVILHÃO (PROJETO 6) -->
+        <!-- DEMANDA DE SEPARAÇÃO POR PAVILHÃO — DETALHES -->
         <!-- ===================================== -->
 
-        <div class="card">
+        <details class="card detalhes-card">
 
-            <h2>
-                🗂️ Demanda de Separação por Pavilhão
-            </h2>
-
-            <div class="upload-area">
-
-                <div class="upload-box">
-
-                    <label>
-                        Consulta 70 — Demanda Separação (.txt)
-                    </label>
-
-                    <label
-                        class="upload-btn"
-                        for="arquivoDemandaSeparacao">
-
-                        Selecionar Arquivo
-
-                    </label>
-
-                    <input
-                        type="file"
-                        id="arquivoDemandaSeparacao"
-                        accept=".txt"
-                        onchange="nomeArquivoSelecionado('arquivoDemandaSeparacao','nomeDemandaSeparacao')">
-
-                    <div
-                        class="upload-nome"
-                        id="nomeDemandaSeparacao">
-
-                        Nenhum arquivo selecionado
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <br>
-
-            <div class="acoes">
-
-                <button
-                    class="btn-processar"
-                    onclick="processarDemandaSeparacao()">
-
-                    🚀 Processar Demanda
-
-                </button>
-
-            </div>
+            <summary>🗂️ Detalhes completos — Demanda de Separação por Pavilhão</summary>
 
             <div
-                class="resultado-tipo oculto"
+                class="resultado-tipo"
                 id="resultado-demanda-separacao">
 
                 <br>
@@ -548,7 +612,7 @@
 
             </div>
 
-        </div>
+        </details>
 
     </div>
 
