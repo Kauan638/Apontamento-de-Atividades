@@ -1696,3 +1696,269 @@ async function baixarResumoImagem(){
     }
 
 }
+
+
+// ========================================
+// RESUMO EM IMAGEM — SÓ SEPARAÇÃO (PNG)
+// Mesmo padrão visual, focado apenas na
+// Demanda de Separação: por categoria e por
+// pavilhão.
+// ========================================
+
+function agregarPorPavilhaoSeparacao(){
+
+    const dados =
+    dadosDemandaSeparacao;
+
+    const mapa =
+    agruparDemandaSeparacao(dados);
+
+    const chaves =
+    ordenarChavesPavilhao(mapa);
+
+    return chaves.map(pavilhao=>{
+
+        const porLinha =
+        mapa.get(pavilhao);
+
+        let total = 0;
+        let sorter = 0;
+        let naoSorter = 0;
+        let outros = 0;
+        let volumeCx = 0;
+
+        porLinha.forEach(grupo=>{
+
+            sorter += grupo.sorter.length;
+            naoSorter += grupo.naoSorter.length;
+            outros += grupo.outros.length;
+
+            volumeCx += [...grupo.sorter, ...grupo.naoSorter, ...grupo.outros]
+            .reduce((s,i) => s + i.volumeCx, 0);
+
+        });
+
+        total = sorter + naoSorter + outros;
+
+        return { pavilhao, total, sorter, naoSorter, outros, volumeCx };
+
+    });
+
+}
+
+function construirRelatorioImagemSeparacao(){
+
+    const dados =
+    dadosDemandaSeparacao;
+
+    const totalAtividades =
+    dados.length;
+
+    const totalSorter =
+    dados.filter(d => d.tipo === "Sorter").length;
+
+    const pctSorter =
+    totalAtividades ? (totalSorter / totalAtividades * 100) : 0;
+
+    const volumeTotalCx =
+    dados.reduce((s,d) => s + d.volumeCx, 0);
+
+    const categoriasSep =
+    categoriasSeparacaoResumo();
+
+    const totalTarefasSep =
+    categoriasSep.reduce((soma, c) => soma + c.tarefas, 0);
+
+    const maiorTarefasSep =
+    categoriasSep.reduce((m, c) => Math.max(m, c.tarefas), 0);
+
+    const linhasCategoria =
+    categoriasSep.map(c => linhaTabelaImagemPct(
+        c.titulo,
+        c.tarefas, c.tarefas.toLocaleString("pt-BR"),
+        maiorTarefasSep ? (c.tarefas / maiorTarefasSep * 100) : 0,
+        "#F2A93B",
+        totalTarefasSep ? formatarPct(c.tarefas / totalTarefasSep * 100) : "0%"
+    )).join("");
+
+    const porPavilhao =
+    agregarPorPavilhaoSeparacao();
+
+    const maiorTotalPavilhao =
+    porPavilhao.reduce((m, p) => Math.max(m, p.total), 0);
+
+    const linhasPavilhao =
+    porPavilhao.map(p => linhaTabelaImagemPct(
+        p.pavilhao,
+        p.total, p.total.toLocaleString("pt-BR"),
+        maiorTotalPavilhao ? (p.total / maiorTotalPavilhao * 100) : 0,
+        "#4C8FD1",
+        totalAtividades ? formatarPct(p.total / totalAtividades * 100) : "0%"
+    )).join("");
+
+    const container =
+    document.createElement("div");
+
+    container.id = "relatorioResumoSeparacaoImagem";
+
+    container.style.cssText =
+        "width:720px;background:#FFFFFF;border-radius:20px;overflow:hidden;" +
+        "font-family:'Inter',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.15);";
+
+    container.innerHTML = `
+
+        <div style="background:#181D23;padding:28px 32px;display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <div style="font-size:22px;font-weight:700;color:#FFFFFF;font-family:'Oswald',sans-serif;letter-spacing:.02em;">
+                    📦 DEMANDA DE SEPARAÇÃO
+                </div>
+                <div style="color:#F2A93B;font-weight:600;margin-top:6px;font-size:13px;letter-spacing:.08em;">
+                    CD 107
+                </div>
+            </div>
+            <div style="background:#232A31;border-radius:10px;padding:10px 18px;text-align:center;">
+                <div style="color:#8B97A3;font-size:10px;letter-spacing:.1em;font-weight:600;">
+                    REFERÊNCIA
+                </div>
+                <div style="color:#FFFFFF;font-weight:700;font-size:16px;font-family:'JetBrains Mono',monospace;margin-top:2px;">
+                    ${formatarDataReferencia()}
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:28px 32px 8px;">
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Total Atividades</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${totalAtividades.toLocaleString("pt-BR")}</div>
+                </div>
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Pavilhões</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${porPavilhao.length.toLocaleString("pt-BR")}</div>
+                </div>
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">% Sorter</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${formatarPct(pctSorter)}</div>
+                </div>
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Volume (cx)</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${volumeTotalCx.toLocaleString("pt-BR")}</div>
+                </div>
+
+            </div>
+
+            <div style="color:#181D23;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;">
+                Por categoria
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Categoria</th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Tarefas</th>
+                        <th style="padding:0 20px 10px;border-bottom:2px solid #181D23;"></th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">% do total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${linhasCategoria}
+                </tbody>
+            </table>
+
+            <div style="color:#181D23;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;">
+                Por pavilhão
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Pavilhão</th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Atividades</th>
+                        <th style="padding:0 20px 10px;border-bottom:2px solid #181D23;"></th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">% do total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${linhasPavilhao || `<tr><td colspan="4" style="padding:14px 20px;color:#8B97A3;font-size:13px;">Sem dados processados ainda.</td></tr>`}
+                </tbody>
+            </table>
+
+        </div>
+
+        <div style="background:#181D23;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#8B97A3;font-size:11px;">Gerado em ${formatarDataHoraCompleta()}</div>
+            <div style="color:#8B97A3;font-size:11px;font-weight:700;">CD-107 · PCP</div>
+        </div>
+
+    `;
+
+    return container;
+
+}
+
+async function baixarResumoImagemSeparacao(){
+
+    if(!dadosDemandaSeparacao.length){
+
+        alert("Processe o arquivo da Demanda de Separação antes de gerar a imagem.");
+
+        return;
+
+    }
+
+    const botao =
+    document.getElementById("btnBaixarResumoSeparacao");
+
+    const textoOriginal =
+    botao.innerText;
+
+    botao.disabled = true;
+    botao.innerText = "⏳ Gerando imagem...";
+
+    const relatorio =
+    construirRelatorioImagemSeparacao();
+
+    relatorio.style.position = "fixed";
+    relatorio.style.left = "-9999px";
+    relatorio.style.top = "0";
+
+    document.body.appendChild(relatorio);
+
+    try{
+
+        const canvas =
+        await html2canvas(relatorio, {
+            scale: 2,
+            backgroundColor: "#FFFFFF",
+            useCORS: true
+        });
+
+        const link =
+        document.createElement("a");
+
+        const carimbo =
+        new Date().toISOString().slice(0,10);
+
+        link.download = `resumo-separacao-cd107-${carimbo}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+    }catch(erro){
+
+        console.error(erro);
+        alert("Não foi possível gerar a imagem do resumo de separação.");
+
+    }finally{
+
+        document.body.removeChild(relatorio);
+        botao.disabled = false;
+        botao.innerText = textoOriginal;
+
+    }
+
+}
