@@ -14,6 +14,8 @@
 
     <link rel="stylesheet" href="style.css">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 </head>
 
 <body>
@@ -342,6 +344,36 @@
                 id="textoResumoExecutivo"
                 readonly
                 placeholder="Clique em &quot;Gerar Resumo&quot; pra montar o texto com os dados processados..."></textarea>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- RESUMO EM IMAGEM — DOWNLOAD -->
+        <!-- ===================================== -->
+
+        <div class="card">
+
+            <h2>
+                🖼️ Resumo em Imagem (Download)
+            </h2>
+
+            <p class="passo-explicacao">
+                Gera uma imagem com o resumo das 3 movimentações — Horizontal, Vertical e
+                Demanda de Separação — pronta pra baixar e enviar no grupo.
+            </p>
+
+            <div class="acoes-whatsapp">
+
+                <button
+                class="btn-imagem"
+                id="btnBaixarResumoImagem"
+                onclick="baixarResumoImagem()">
+
+                    🖼️ Baixar Imagem
+
+                </button>
 
             </div>
 

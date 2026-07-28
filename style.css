@@ -307,6 +307,27 @@ button:focus-visible{
     background:#E4991F;
 }
 
+.btn-imagem{
+
+    background:var(--blue);
+
+    color:#0D1B29;
+}
+
+.btn-imagem:hover{
+
+    background:#5FA0DE;
+}
+
+.btn-imagem:disabled{
+
+    opacity:.6;
+
+    cursor:wait;
+
+    transform:none;
+}
+
 /* =========================
 KPIS — INDICADORES DE PAINEL
 Cor da borda lateral = significado real do dado

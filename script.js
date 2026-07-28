@@ -1367,3 +1367,332 @@ function copiarResumoExecutivo(){
     });
 
 }
+
+
+// ========================================
+// RESUMO EM IMAGEM — DOWNLOAD (PNG)
+// Cartão visual (mesmo padrão dos relatórios em
+// imagem da suíte CD-107) com o resumo das 3
+// movimentações, pronto pra baixar e compartilhar.
+// ========================================
+
+function formatarDataReferencia(){
+
+    return new Date().toLocaleDateString("pt-BR",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"2-digit"
+    });
+
+}
+
+function formatarDataHoraCompleta(){
+
+    return new Date().toLocaleString("pt-BR",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"numeric",
+        hour:"2-digit",
+        minute:"2-digit",
+        second:"2-digit"
+    });
+
+}
+
+function categoriasSeparacaoResumo(){
+
+    const dados =
+    dadosDemandaSeparacao;
+
+    const categorias = [
+        { titulo: "Picking Sorter", filtro: d => d.tipo === "Sorter" },
+        { titulo: "Picking Não Sorter", filtro: d => d.tipo === "Não Sorter" },
+        { titulo: "Bebidas", filtro: d => parseInt(d.coddep, 10) === 3 },
+        { titulo: "Perecíveis", filtro: d => parseInt(d.coddep, 10) === 2 }
+    ];
+
+    return categorias.map(cat=>{
+
+        const itensCategoria =
+        dados.filter(cat.filtro);
+
+        return {
+            titulo: cat.titulo,
+            tarefas: itensCategoria.length,
+            volumes: itensCategoria.reduce((soma, d) => soma + d.volumeCx, 0)
+        };
+
+    });
+
+}
+
+function linhaTabelaImagemPct(label, valorPrincipal, valorPrincipalFmt, pctBarra, corBarra, pctLabel){
+
+    return `
+    <tr>
+        <td style="padding:14px 20px;font-size:14px;font-weight:600;color:#181D23;border-bottom:1px solid #EDEFF2;white-space:nowrap;font-family:'Inter',sans-serif;">
+            ${label}
+        </td>
+        <td style="padding:14px 20px;font-size:14px;font-weight:700;color:#181D23;border-bottom:1px solid #EDEFF2;text-align:right;white-space:nowrap;font-family:'JetBrains Mono',monospace;">
+            ${valorPrincipalFmt}
+        </td>
+        <td style="padding:14px 20px;border-bottom:1px solid #EDEFF2;width:38%;">
+            <div style="background:#EDEFF2;border-radius:20px;height:8px;overflow:hidden;">
+                <div style="background:${corBarra};height:8px;border-radius:20px;width:${Math.min(Math.max(pctBarra,valorPrincipal>0?4:0),100)}%;"></div>
+            </div>
+        </td>
+        <td style="padding:14px 20px;font-size:13px;font-weight:600;color:#8B97A3;border-bottom:1px solid #EDEFF2;text-align:right;white-space:nowrap;font-family:'JetBrains Mono',monospace;">
+            ${pctLabel}
+        </td>
+    </tr>`;
+
+}
+
+function construirRelatorioImagemResumo(){
+
+    const kpisH =
+    computarKpis(dadosHorizontal, limites.horizontal);
+
+    const kpisV =
+    computarKpis(dadosVertical, limites.vertical);
+
+    const combinado = [
+        ...dadosHorizontal.map(d => ({...d, limite: limites.horizontal})),
+        ...dadosVertical.map(d => ({...d, limite: limites.vertical}))
+    ];
+
+    const totalCombinado =
+    combinado.length;
+
+    const criticasCombinado =
+    combinado.filter(d => d.tempoMinutos >= d.limite).length;
+
+    const pctCriticoCombinado =
+    totalCombinado ? (criticasCombinado / totalCombinado * 100) : 0;
+
+    let secaoMaiorTempo = "—";
+
+    let maiorTempoCombinado = 0;
+
+    if(kpisH.maiorTempo >= kpisV.maiorTempo){
+
+        maiorTempoCombinado = kpisH.maiorTempo;
+        secaoMaiorTempo = "Movimentação Horizontal";
+
+    }else{
+
+        maiorTempoCombinado = kpisV.maiorTempo;
+        secaoMaiorTempo = "Movimentação Vertical";
+
+    }
+
+    const categoriasSep =
+    categoriasSeparacaoResumo();
+
+    const totalTarefasSep =
+    categoriasSep.reduce((soma, c) => soma + c.tarefas, 0);
+
+    const maiorTarefasSep =
+    categoriasSep.reduce((m, c) => Math.max(m, c.tarefas), 0);
+
+    const corCritico = pct => pct >= 50 ? "#E8564F" : (pct >= 25 ? "#F2A93B" : "#3DCB82");
+
+    const linhasMovimento =
+        linhaTabelaImagemPct(
+            "Movimentação Horizontal",
+            kpisH.total, kpisH.total.toLocaleString("pt-BR"),
+            kpisH.pctCritico, corCritico(kpisH.pctCritico),
+            formatarPct(kpisH.pctCritico)
+        ) +
+        linhaTabelaImagemPct(
+            "Movimentação Vertical",
+            kpisV.total, kpisV.total.toLocaleString("pt-BR"),
+            kpisV.pctCritico, corCritico(kpisV.pctCritico),
+            formatarPct(kpisV.pctCritico)
+        );
+
+    const linhasSeparacao =
+    categoriasSep.map(c => linhaTabelaImagemPct(
+        c.titulo,
+        c.tarefas, c.tarefas.toLocaleString("pt-BR"),
+        maiorTarefasSep ? (c.tarefas / maiorTarefasSep * 100) : 0,
+        "#F2A93B",
+        totalTarefasSep ? formatarPct(c.tarefas / totalTarefasSep * 100) : "0%"
+    )).join("");
+
+    const container =
+    document.createElement("div");
+
+    container.id = "relatorioResumoImagem";
+
+    container.style.cssText =
+        "width:720px;background:#FFFFFF;border-radius:20px;overflow:hidden;" +
+        "font-family:'Inter',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.15);";
+
+    container.innerHTML = `
+
+        <div style="background:#181D23;padding:28px 32px;display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <div style="font-size:22px;font-weight:700;color:#FFFFFF;font-family:'Oswald',sans-serif;letter-spacing:.02em;">
+                    ⏱️ RESUMO DE ATIVIDADES
+                </div>
+                <div style="color:#F2A93B;font-weight:600;margin-top:6px;font-size:13px;letter-spacing:.08em;">
+                    CD 107
+                </div>
+            </div>
+            <div style="background:#232A31;border-radius:10px;padding:10px 18px;text-align:center;">
+                <div style="color:#8B97A3;font-size:10px;letter-spacing:.1em;font-weight:600;">
+                    REFERÊNCIA
+                </div>
+                <div style="color:#FFFFFF;font-weight:700;font-size:16px;font-family:'JetBrains Mono',monospace;margin-top:2px;">
+                    ${formatarDataReferencia()}
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:28px 32px 8px;">
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Horizontal</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${kpisH.total.toLocaleString("pt-BR")}</div>
+                </div>
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Vertical</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${kpisV.total.toLocaleString("pt-BR")}</div>
+                </div>
+
+                <div style="background:#F3F5F7;border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:#8B97A3;font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">Separação</div>
+                    <div style="color:#181D23;font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${totalTarefasSep.toLocaleString("pt-BR")}</div>
+                </div>
+
+                <div style="background:${pctCriticoCombinado>=50?'#FBEAE9':'#F3F5F7'};border-radius:12px;padding:16px;text-align:center;">
+                    <div style="color:${pctCriticoCombinado>=50?'#C7423B':'#8B97A3'};font-size:10px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;">% Crítico</div>
+                    <div style="color:${pctCriticoCombinado>=50?'#C7423B':'#181D23'};font-size:22px;font-weight:700;margin-top:6px;font-family:'JetBrains Mono',monospace;">${formatarPct(pctCriticoCombinado)}</div>
+                </div>
+
+            </div>
+
+            <div style="background:#F3F5F7;border-left:4px solid #F2A93B;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <div style="color:#181D23;font-size:13px;font-weight:700;">⏱ MAIOR TEMPO REGISTRADO</div>
+                    <div style="color:#8B97A3;font-size:12px;margin-top:2px;">${secaoMaiorTempo}</div>
+                </div>
+                <div style="color:#181D23;font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;">
+                    ${maiorTempoCombinado ? formatarTempo(maiorTempoCombinado) : "—"}
+                </div>
+            </div>
+
+            <div style="color:#181D23;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;">
+                Movimentação — Horizontal x Vertical
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Seção</th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Total</th>
+                        <th style="padding:0 20px 10px;border-bottom:2px solid #181D23;"></th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">% Crítico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${linhasMovimento}
+                </tbody>
+            </table>
+
+            <div style="color:#181D23;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px;">
+                Demanda de Separação — por categoria
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Categoria</th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">Tarefas</th>
+                        <th style="padding:0 20px 10px;border-bottom:2px solid #181D23;"></th>
+                        <th style="text-align:right;padding:0 20px 10px;font-size:11px;color:#8B97A3;letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid #181D23;">% do total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${linhasSeparacao}
+                </tbody>
+            </table>
+
+        </div>
+
+        <div style="background:#181D23;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#8B97A3;font-size:11px;">Gerado em ${formatarDataHoraCompleta()}</div>
+            <div style="color:#8B97A3;font-size:11px;font-weight:700;">CD-107 · PCP</div>
+        </div>
+
+    `;
+
+    return container;
+
+}
+
+async function baixarResumoImagem(){
+
+    if(!dadosHorizontal.length && !dadosVertical.length && !dadosDemandaSeparacao.length){
+
+        alert("Processe pelo menos uma das seções (Horizontal, Vertical ou Separação) antes de gerar a imagem.");
+
+        return;
+
+    }
+
+    const botao =
+    document.getElementById("btnBaixarResumoImagem");
+
+    const textoOriginal =
+    botao.innerText;
+
+    botao.disabled = true;
+    botao.innerText = "⏳ Gerando imagem...";
+
+    const relatorio =
+    construirRelatorioImagemResumo();
+
+    relatorio.style.position = "fixed";
+    relatorio.style.left = "-9999px";
+    relatorio.style.top = "0";
+
+    document.body.appendChild(relatorio);
+
+    try{
+
+        const canvas =
+        await html2canvas(relatorio, {
+            scale: 2,
+            backgroundColor: "#FFFFFF",
+            useCORS: true
+        });
+
+        const link =
+        document.createElement("a");
+
+        const carimbo =
+        new Date().toISOString().slice(0,10);
+
+        link.download = `resumo-atividades-cd107-${carimbo}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+    }catch(erro){
+
+        console.error(erro);
+        alert("Não foi possível gerar a imagem do resumo.");
+
+    }finally{
+
+        document.body.removeChild(relatorio);
+        botao.disabled = false;
+        botao.innerText = textoOriginal;
+
+    }
+
+}
